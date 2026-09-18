@@ -1,0 +1,11 @@
+node_modules/
+__pycache__/
+.DS_Store
+output/
+target/
+.venv/
+fixtures/
+# Local document artifacts are never source files.
+/*.pdf
+/*.png
+/*.docx

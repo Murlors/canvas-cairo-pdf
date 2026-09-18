@@ -1,0 +1,5 @@
+# Exclude only authored test/diagnostic helpers from the runtime language chart.
+# This is a Linguist display override, not a claim of third-party ownership.
+tools/** linguist-vendored
+tests/** linguist-vendored
+crates/**/tests/** linguist-vendored
