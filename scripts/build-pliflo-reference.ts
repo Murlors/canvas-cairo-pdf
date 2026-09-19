@@ -20,13 +20,20 @@ replaceOnce(
 }`,
 );
 replaceOnce('from "marked"', 'from "/marked.mjs"');
+replaceOnce(
+  'import { createRecordedCanvas, recordingPage } from "./cairo";',
+  'function createRecordedCanvas() { return document.createElement("canvas"); }',
+);
+replaceOnce('from "canvas-cairo-pdf/xlsx-fit"', 'from "/xlsx-fit.mjs"');
 for (const format of ["docx", "pptx", "xlsx"])
   replaceOnce(`import("@silurus/ooxml/${format}")`, `import("/ooxml/${format}.mjs")`);
-const start = code.indexOf("  const blob = await new Promise<Blob>");
-const end = code.indexOf("\nfunction bitmapToCanvas", start);
+const start = code.indexOf("async function canvasToPage(");
+const end = code.indexOf("\nfunction pagePixels", start);
 if (start < 0 || end < 0) throw Error("Missing canvas output boundary");
 code =
-  code.slice(0, start) + "  return {canvas, pageWidthPt, pageHeightPt};\n}\n" + code.slice(end);
+  code.slice(0, start) +
+  "async function canvasToPage(canvas, pageWidthPt, pageHeightPt) { return {canvas, pageWidthPt, pageHeightPt}; }\n" +
+  code.slice(end);
 code += "\nexport {renderMarkdown, renderImage, renderDocx, renderPptx, renderXlsx};\n";
 const transpiler = new Bun.Transpiler({ loader: "ts" });
 const out = resolve(import.meta.dirname, "../output/pliflo-reference");
