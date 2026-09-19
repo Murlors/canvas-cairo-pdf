@@ -208,6 +208,8 @@ impl State {
 #[serde(deny_unknown_fields)]
 pub struct Image {
     pub png: String,
+    #[serde(skip)]
+    pub bytes: Option<Vec<u8>>,
     pub width: f64,
     pub height: f64,
 }

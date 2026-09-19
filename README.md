@@ -141,7 +141,7 @@ Document checks also require the full build and selected host. Use the Chromium 
 - Only a subset of Canvas is supported; complex Office content can fail even when the browser displays it.
 - XLSX uses landscape A4 and used-range/row-height pagination, not full Excel print settings, print areas or horizontal page tiling. Actual-scale wide content can clip. Chart sheets, dialog sheets and sheets reporting parse errors are skipped.
 - Browser and Pango font resolution are separate; available fonts affect layout and output.
-- Images use Base64 PNG. Sequential page spooling does not bound all source/recording memory; the integration adapter can retain multiple page canvases.
+- The development runner uses Base64 PNG; embedded hosts can use the exported recorder's binary `CCP1` frames. Sequential page spooling does not bound all source/recording memory; the integration adapter can retain multiple page canvases.
 - Windows cancellation targets active child-process trees. Crash-orphaned sessions are retained conservatively; reliable automatic reclamation is not implemented there.
 - Synthetic fixtures/browser comparisons are not Office layout goldens. Descendant RSS excludes some system-managed WebKit helpers.
 - Native packaging is macOS-only. Clean-machine acceptance, distribution signing and a complete bundled-library license audit remain outstanding.

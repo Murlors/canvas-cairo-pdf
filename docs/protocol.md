@@ -35,7 +35,9 @@ The TypeScript recorder recognizes more operations than Rust supports. Curves, a
 
 ## Images, text and validation
 
-Images are objects with Base64 `png`, `width` and `height`. The renderer validates PNG headers and declared dimensions, limits the encoded string to 128 MiB and the decoded dimensions to 64 million pixels, and rejects empty dimensions. Image transport is not binary streaming.
+JSON images contain Base64 `png`, `width` and `height`. Embedded hosts can instead call `recordCanvas(canvas, true)` and `encodePage(canvas, widthPt, heightPt)` from `canvas-cairo-pdf/recorder`. This produces a `CCP1` frame: four magic bytes, a little-endian u32 JSON length, JSON, a u32 image count, and length-prefixed raw PNGs. Image placeholders are `@binary:<index>`, used exactly once. `decode_recording` and manifest file entries accept this format. Truncated, trailing and unreferenced data are rejected; binary pages are limited to 256 MiB. PNG headers, declared dimensions and the 64-million-pixel limit are checked before drawing.
+
+Rust hosts can use `render_input_cancellable` to check cancellation at page boundaries. Cancellation removes the newly created partial output, just like other rendering failures.
 
 Numeric values have finite/range checks; transforms must be invertible, alpha must be in [0, 1], and save/restore must balance. Unknown operations and unknown fields in the decoded structures are rejected. These checks do not establish a complete resource sandbox for malicious documents.
 

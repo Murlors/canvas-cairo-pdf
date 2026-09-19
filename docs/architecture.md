@@ -32,7 +32,7 @@ Vite+ bundles browser TypeScript. The full build also prepares the hash-checked 
 
 The development runner serves local assets on a loopback HTTP server. macOS defaults to WKWebView; other platforms default to Playwright Chromium. Chromium requires a separately installed browser binary. These development hosts are not a packaged desktop integration.
 
-Pages are acknowledged and spooled sequentially to a unique session under `output/bridge-pages/`. Diagnostics retain recordings, reference PNGs and page PDFs; normal preparation disables them. Base64 image payloads and per-page/source allocations mean sequential spooling is not a total memory bound.
+Pages are acknowledged and spooled sequentially to a unique session under `output/bridge-pages/`. Diagnostics retain recordings, reference PNGs and page PDFs; normal preparation disables them. The development host uses JSON/Base64; embedded hosts can import `canvas-cairo-pdf/recorder` and send binary page frames without a development server. Per-page/source allocations mean sequential spooling is not a total memory bound.
 
 `prepareDocument` uses a module-local single-task guard, timeout and abort signal. PDF input is returned unchanged, with a nullable parsed page count. Non-PDF input runs in a managed child process; success retains its generated PDF. Failure cleanup waits for termination and only removes owned sessions when safe.
 

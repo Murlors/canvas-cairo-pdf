@@ -1,11 +1,19 @@
 {
   "name": "canvas-cairo-pdf",
+  "private": true,
   "description": "Canvas drawing commands to Cairo/Pango PDF with document adapters",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Murlors/canvas-cairo-pdf.git"
+  },
   "type": "module",
-  "private": true,
-  "engines": { "node": ">=24.12.0" },
-  "packageManager": "bun@1.4.2",
+  "exports": {
+    "./recorder": "./browser/recorder.ts",
+    "./protocol": "./browser/protocol.ts",
+    "./xlsx-fit": "./browser/xlsx-fit.ts",
+    "./build-runtime": "./scripts/build-ooxml-runtime.ts"
+  },
   "scripts": {
     "build": "vp pack && node scripts/build.ts",
     "build:browser": "vp pack",
@@ -19,15 +27,15 @@
     "@silurus/ooxml": "0.87.0",
     "pdf-lib": "1.17.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Murlors/canvas-cairo-pdf.git"
-  },
   "devDependencies": {
     "@types/bun": "^1.4.2",
     "@types/node": "^26.6.1",
     "playwright-core": "^1.63.0",
     "typescript": "^7.0.2",
     "vite-plus": "0.3.2"
-  }
+  },
+  "engines": {
+    "node": ">=24.12.0"
+  },
+  "packageManager": "bun@1.4.2"
 }

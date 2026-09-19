@@ -1,6 +1,8 @@
 //! Canvas recording v1 → Cairo/Pango PDF。无需 Node、Objective-C 或 GUI 运行时。
 //! 所有文件输出均使用 create_new；失败时仅清理本次创建的 PDF。
+mod binary;
 pub mod protocol;
+pub use binary::decode_recording;
 mod render;
 mod text;
 
@@ -13,7 +15,7 @@ use std::{
 
 use anyhow::{ensure, Context, Result};
 use cairo::PdfSurface;
-use protocol::{Input, Page, Recording};
+use protocol::{Input, Page};
 
 /// 库调用显式传选项，不读取或修改进程环境。CLI 负责兼容 PLIFLO_* 变量。
 #[derive(Debug, Default, Clone)]
@@ -71,6 +73,16 @@ pub fn render_input(
     output: impl AsRef<Path>,
     options: &RenderOptions,
 ) -> Result<RenderReport> {
+    render_input_cancellable(input, output, options, || false)
+}
+
+/// 宿主取消在每页边界检查；失败时遵循相同的部分输出清理规则。
+pub fn render_input_cancellable(
+    input: Input,
+    output: impl AsRef<Path>,
+    options: &RenderOptions,
+    cancelled: impl Fn() -> bool,
+) -> Result<RenderReport> {
     options.validate()?;
     let output = output.as_ref();
     ensure!(
@@ -91,7 +103,7 @@ pub fn render_input(
         .create_new(true)
         .open(output)
         .with_context(|| format!("Output must be a new PDF path: {}", output.display()))?;
-    let result = render_pages(pages, file, options);
+    let result = render_pages(pages, file, options, cancelled);
     if let Err(error) = result {
         // render_pages 的 Cairo 和文件句柄已释放，Windows 上也可以删除。
         if let Err(cleanup) = fs::remove_file(output) {
@@ -105,7 +117,12 @@ pub fn render_input(
     result
 }
 
-fn render_pages(pages: Vec<Page>, file: File, options: &RenderOptions) -> Result<RenderReport> {
+fn render_pages(
+    pages: Vec<Page>,
+    file: File,
+    options: &RenderOptions,
+    cancelled: impl Fn() -> bool,
+) -> Result<RenderReport> {
     let mut text = text::TextRenderer {
         aliases: &options.font_aliases,
         diagnostics: options.font_diagnostics,
@@ -115,14 +132,14 @@ fn render_pages(pages: Vec<Page>, file: File, options: &RenderOptions) -> Result
     let surface = PdfSurface::for_stream(1.0, 1.0, file)?;
     let count = pages.len();
     for (index, page) in pages.into_iter().enumerate() {
+        ensure!(!cancelled(), "Rendering cancelled");
         let result = (|| -> Result<()> {
             let recording = match page {
                 Page::Inline(recording) => recording,
                 Page::Path(path) => {
-                    let file = File::open(&path)
+                    let bytes = fs::read(&path)
                         .with_context(|| format!("Cannot open page {}", path.display()))?;
-                    serde_json::from_reader::<_, Recording>(BufReader::new(file))
-                        .context("Invalid page recording")?
+                    decode_recording(&bytes)?
                 }
             };
             render::page(&surface, &recording, &mut text)
@@ -133,6 +150,7 @@ fn render_pages(pages: Vec<Page>, file: File, options: &RenderOptions) -> Result
         .finish_output_stream()
         .map_err(std::io::Error::from)?;
     surface.status()?;
+    ensure!(!cancelled(), "Rendering cancelled");
     let file = stream
         .downcast::<File>()
         .map_err(|_| anyhow::anyhow!("Unexpected PDF output stream"))?;

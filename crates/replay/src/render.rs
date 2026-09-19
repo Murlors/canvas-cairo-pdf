@@ -52,7 +52,13 @@ fn image(cr: &Context, image: &Image, [x, y, w, h]: [f64; 4], alpha: f64) -> Res
         image.png.len() <= 128 * 1024 * 1024,
         "Encoded PNG exceeds 128 MiB limit"
     );
-    let png = STANDARD.decode(&image.png).context("Invalid PNG base64")?;
+    let decoded;
+    let png = if let Some(bytes) = &image.bytes {
+        bytes.as_slice()
+    } else {
+        decoded = STANDARD.decode(&image.png).context("Invalid PNG base64")?;
+        decoded.as_slice()
+    };
     // 解码前检查 IHDR，防止伪造的小尺寸元数据触发巨幅图像分配。
     ensure!(
         png.len() >= 24
